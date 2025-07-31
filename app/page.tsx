@@ -1,41 +1,29 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { generateClient } from "aws-amplify/data"
-import type { Schema } from "@/amplify/data/resource"
+import { useState } from "react"
 import "./../app/app.css"
-import { Amplify } from "aws-amplify"
-import outputs from "@/amplify_outputs.json"
-import "@aws-amplify/ui-react/styles.css"
-import { useAuthenticator } from "@aws-amplify/ui-react"
 
-Amplify.configure(outputs)
-
-const client = generateClient<Schema>()
+interface Todo {
+  id: string
+  content: string
+}
 
 export default function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([])
-
-  const { signOut } = useAuthenticator()
+  const [todos, setTodos] = useState<Todo[]>([])
 
   function deleteTodo(id: string) {
-    client.models.Todo.delete({ id })
+    setTodos(todos.filter(todo => todo.id !== id))
   }
-
-  function listTodos() {
-    client.models.Todo.observeQuery().subscribe({
-      next: data => setTodos([...data.items])
-    })
-  }
-
-  useEffect(() => {
-    listTodos()
-  }, [])
 
   function createTodo() {
-    client.models.Todo.create({
-      content: window.prompt("Todo content")
-    })
+    const content = window.prompt("Todo content")
+    if (content) {
+      const newTodo: Todo = {
+        id: Date.now().toString(), // Simple ID generation
+        content
+      }
+      setTodos([...todos, newTodo])
+    }
   }
 
   return (
@@ -51,12 +39,7 @@ export default function App() {
       </ul>
       <div>
         🥳 App successfully hosted. Try creating a new todo.
-        <br />
-        <a href="https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/">
-          Review next steps of this tutorial.
-        </a>
       </div>
-      <button onClick={signOut}>Sign out</button>
     </main>
   )
 }
